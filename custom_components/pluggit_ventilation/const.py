@@ -1,7 +1,7 @@
 """Constants for integration_blueprint."""
 # Base component constants
-NAME = "Integration blueprint"
-DOMAIN = "integration_blueprint"
+NAME = "Pluggit ventilation"
+DOMAIN = "pluggit_ventilation"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.0.1"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
@@ -19,15 +19,10 @@ SENSOR = "sensor"
 SWITCH = "switch"
 PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
 
-
-# Configuration and options
-CONF_ENABLED = "enabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
-
 # Defaults
-DEFAULT_NAME = DOMAIN
-
+DEFAULT_NAME = "Pluggit"
+DEFAULT_SCAN_INTERVAL = 15
+DEFAULT_PORT = 502
 
 STARTUP_MESSAGE = f"""
 -------------------------------------------------------------------

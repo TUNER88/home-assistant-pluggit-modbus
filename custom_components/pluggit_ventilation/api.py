@@ -5,6 +5,7 @@ import socket
 from typing import Optional
 import aiohttp
 import async_timeout
+from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 TIMEOUT = 10
 
@@ -14,14 +15,26 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 HEADERS = {"Content-type": "application/json; charset=UTF-8"}
 
 
-class IntegrationBlueprintApiClient:
-    def __init__(
-        self, username: str, password: str, session: aiohttp.ClientSession
-    ) -> None:
+class PluggitVentilationApiClient:
+    def __init__(self, host: str, port: int) -> None:
         """Sample API Client."""
-        self._username = username
-        self._password = password
-        self._session = session
+        self._host = host
+        self._port = port
+        self._username = ""
+        self._password = ""
+        self._session = None
+
+    def test_connection(self) -> bool:
+        _LOGGER.info("Test connection")
+        _LOGGER.info(self._host)
+        client = ModbusClient(self._host, port=502)
+        connected = client.connect()
+
+        if connected:
+            client.close()
+            return True
+
+        return False
 
     async def async_get_data(self) -> dict:
         """Get data from the API."""

@@ -6,6 +6,9 @@
   "issue_tracker": "https://github.com/TUNER88/home-assistant-pluggit-modbus/issues",
   "version": "0.0.1",
   "config_flow": true,
+  "requirements": [
+    "pymodbus>=2.5.3"
+  ],
   "codeowners": [
     "@TUNER88"
   ]
