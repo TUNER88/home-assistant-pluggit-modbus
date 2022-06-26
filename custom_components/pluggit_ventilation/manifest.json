@@ -1,0 +1,12 @@
+{
+  "domain": "pluggit_ventilation",
+  "name": "Pluggit ventilation",
+  "documentation": "https://github.com/TUNER88/home-assistant-pluggit-modbus",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/TUNER88/home-assistant-pluggit-modbus/issues",
+  "version": "0.0.1",
+  "config_flow": true,
+  "codeowners": [
+    "@TUNER88"
+  ]
+}
