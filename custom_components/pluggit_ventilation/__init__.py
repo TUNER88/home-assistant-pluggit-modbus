@@ -13,6 +13,10 @@ from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
+
+from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.constants import Endian
 
 from .api import PluggitVentilationApiClient
 
@@ -38,28 +42,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info(STARTUP_MESSAGE)
 
-    username = entry.data.get("CONF_USERNAME")
-    password = entry.data.get("CONF_PASSWORD")
+    host = entry.data[CONF_HOST]
+    name = entry.data[CONF_NAME]
+    port = entry.data[CONF_PORT]
+    scan_interval = entry.data[CONF_SCAN_INTERVAL]
 
-    session = async_get_clientsession(hass)
-    client = PluggitVentilationApiClient(username, password, session)
+    _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    coordinator = BlueprintDataUpdateCoordinator(hass, client=client)
-    await coordinator.async_refresh()
+    hub = PluggitVentilationApiClient(host, port)
 
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
+    """Register the hub."""
+    hass.data[DOMAIN][name] = {"hub": hub}
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    # read serial number
+    seriesnumber = "unknown"
+    inverter_data = hub.read_holding_registers(unit=0x1, address=133, count=2)
+    if inverter_data.isError():
+        _LOGGER.error("cannot perform initial read for serial number")
+    else:
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            inverter_data.registers, Endian.Big, wordorder=Endian.Big
+        )
+        seriesnumber = decoder.decode_32bit_float()
+        hub.seriesnumber = seriesnumber
+    _LOGGER.info(f"serial number = {seriesnumber}")
 
-    for platform in PLATFORMS:
-        if entry.options.get(platform, True):
-            coordinator.platforms.append(platform)
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
+    cust = hub.get_64bit_uint(4)
+    _LOGGER.info(f"SER CUSTOM = {cust}")
 
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     return True
 
 

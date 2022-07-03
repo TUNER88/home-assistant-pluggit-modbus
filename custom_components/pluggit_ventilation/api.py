@@ -6,9 +6,14 @@ from typing import Optional
 import aiohttp
 import async_timeout
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from datetime import datetime, timedelta
+from homeassistant.core import HomeAssistant, callback
+import threading
+from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.constants import Endian
 
 TIMEOUT = 10
-
+UNIT = 0x1
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -16,13 +21,40 @@ HEADERS = {"Content-type": "application/json; charset=UTF-8"}
 
 
 class PluggitVentilationApiClient:
-    def __init__(self, host: str, port: int) -> None:
-        """Sample API Client."""
+    def __init__(self, host, port) -> None:
+        """Modbus API Client."""
+        _LOGGER.info("Create Pluggit modbus client")
+
+        self._client = ModbusClient(host=host, port=port)
+        self._lock = threading.Lock()
+
         self._host = host
         self._port = port
-        self._username = ""
-        self._password = ""
-        self._session = None
+        self._sensors = []
+        self.data = {}
+        _LOGGER.info("Pluggit modbus client created %s", self.__dict__)
+
+    @callback
+    def async_add_pluggit_ventilation_sensor(self, update_callback):
+        """Listen for data updates."""
+        # This is the first sensor, set up interval.
+        # _LOGGER.info(" This is the first sensor, set up interval.")
+
+        self._sensors.append(update_callback)
+
+    def read_holding_registers(self, unit, address, count):
+        """Read holding registers."""
+        with self._lock:
+            kwargs = {"unit": unit} if unit else {}
+            return self._client.read_holding_registers(address, count, **kwargs)
+
+    def get_64bit_uint(self, register):
+        response = self._client.read_holding_registers(register, 4, unit=UNIT)
+        assert not response.isError()
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            response.registers, Endian.Big, wordorder=Endian.Little
+        )
+        return decoder.decode_64bit_uint()
 
     def test_connection(self) -> bool:
         _LOGGER.info("Test connection")

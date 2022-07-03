@@ -1,3 +1,4 @@
+import logging
 from homeassistant import config_entries
 from homeassistant.core import callback
 from .const import DOMAIN
@@ -6,6 +7,8 @@ import voluptuous as vol
 from .api import PluggitVentilationApiClient
 from .const import DOMAIN, DEFAULT_NAME, DEFAULT_PORT, DEFAULT_SCAN_INTERVAL
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -80,7 +83,7 @@ class PluggitVentilationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             client = PluggitVentilationApiClient(host, port)
             return client.test_connection()
         except Exception:  # pylint: disable=broad-except
-            logger.exception("Fatal error in main loop")
+            _LOGGER.exception("Fatal error in main loop")
             pass
         return False
 
