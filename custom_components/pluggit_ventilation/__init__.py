@@ -13,6 +13,8 @@ from homeassistant.core import Config, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers import device_registry as dr, entity_registry
+
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 
 from pymodbus.payload import BinaryPayloadDecoder
@@ -69,6 +71,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     cust = hub.get_64bit_uint(4)
     _LOGGER.info(f"SER CUSTOM = {cust}")
+
+    device_registry = dr.async_get(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, cust)},
+        manufacturer="Pluggit",
+        model="P310",
+        sw_version="1.0.0",
+        hw_version="2.0.0",
+        name=name,
+    )
 
     return True
 
